@@ -18,7 +18,6 @@
 
     <ItemGroup>
       <Folder Include="Commands\Checks" />
-      <Folder Include="Common" />
       <Folder Include="Database\Models" />
       <Folder Include="Extensions" />
       <Folder Include="Services" />
