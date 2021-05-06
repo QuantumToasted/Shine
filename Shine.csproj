@@ -18,9 +18,13 @@
 
     <ItemGroup>
       <Folder Include="Commands\Checks" />
-      <Folder Include="Database\Models" />
       <Folder Include="Extensions" />
-      <Folder Include="Services" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="entry_count.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
