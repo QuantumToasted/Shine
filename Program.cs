@@ -3,12 +3,15 @@ using System.Linq;
 using System.Net.Http;
 using Disqord;
 using Disqord.Bot.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Events;
 using Shine.Common;
+using Shine.Database;
 
 namespace Shine
 {
@@ -24,6 +27,7 @@ namespace Shine
                 .ConfigureLogging(x =>
                 {
                     var logger = new LoggerConfiguration()
+                        .MinimumLevel.Override("Microsoft", LogEventLevel.Error)
                         .WriteTo.Console(
                             outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
                         .WriteTo.File("Logs/log_.txt",
@@ -36,10 +40,15 @@ namespace Shine
                     x.Services.Remove(x.Services.First(y => y.ServiceType == typeof(ILogger<>)));
                     x.Services.AddSingleton(typeof(ILogger<>), typeof(DummyLogger<>));
                 })
-                .ConfigureServices(x =>
+                .ConfigureServices((context, services) =>
                 {
-                    x.AddSingleton<Random>();
-                    x.AddSingleton<HttpClient>();
+                    services.AddSingleton<Random>();
+                    services.AddSingleton<HttpClient>();
+                    services.AddDbContext<ShineDbContext>(options =>
+                    {
+                        var connectionString = context.Configuration["DB_CONNECTION_STRING"];
+                        options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                    });
                 })
                 .ConfigureDiscordBot((context, bot) =>
                 {
