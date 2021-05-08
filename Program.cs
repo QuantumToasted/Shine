@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net.Http;
 using Disqord;
 using Disqord.Bot.Hosting;
+using Disqord.Gateway;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,7 @@ namespace Shine
                 .ConfigureAppConfiguration(x =>
                 {
                     x.AddEnvironmentVariables("SHINE_");
+                    x.AddJsonFile("config.json");
                 })
                 .ConfigureLogging(x =>
                 {
@@ -60,6 +62,10 @@ namespace Shine
                         176081685702639616 
                     };
                     bot.Prefixes = new[] {"s!"};
+                    bot.Activities = new[]
+                    {
+                        new LocalActivity("s!", ActivityType.Playing)
+                    };
                 })
                 .Build();
             
