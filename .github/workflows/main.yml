@@ -17,7 +17,7 @@ jobs:
       with:
         dotnet-version: '5.0.202'
     - name: Publish project
-      run: dotnet publish -c Release -o deploy
+      run: dotnet publish -c Release -r linux-x64 -o deploy
     - name: Copy via SSH
       uses: garygrossgarten/github-action-scp@v0.7.3
       with:
