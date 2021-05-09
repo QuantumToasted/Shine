@@ -18,6 +18,9 @@ jobs:
         dotnet-version: '5.0.201'
     - name: Publish project
       run: dotnet publish -c Release -o deploy
+    - name: Get unlost
+      run: ls -R
+      working-directory: /home/runner/work
     - name: Copy via SSH
       uses: garygrossgarten/github-action-scp@v0.7.3
       with:
