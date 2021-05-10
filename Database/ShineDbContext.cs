@@ -13,6 +13,8 @@ namespace Shine.Database
         public DbSet<Profile> Profiles { get; set; }
         
         public DbSet<Tourney> Tourneys { get; set; }
+        
+        public DbSet<ConfigSetting> Config { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -83,6 +85,21 @@ namespace Shine.Database
                 entity.Property(e => e.Start)
                     .HasColumnType("datetime")
                     .HasColumnName("tourneystart");
+            });
+            
+            modelBuilder.Entity<ConfigSetting>(entity =>
+            {
+                entity.HasKey(e => e.Setting)
+                    .HasName("PRIMARY");
+
+                entity.ToTable("shine_config");
+
+                entity.Property(e => e.Setting).HasColumnName("setting");
+
+                entity.Property(e => e.Value)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasColumnName("value");
             });
         }
     }
