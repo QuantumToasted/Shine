@@ -31,13 +31,4 @@
       <Folder Include="Extensions" />
     </ItemGroup>
 
-    <ItemGroup>
-      <None Update="entry_count.txt">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="config.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
 </Project>

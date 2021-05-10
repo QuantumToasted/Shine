@@ -12,6 +12,9 @@ namespace Shine.Database
         
         public int EntrantCap { get; set; }
 
+        public string GetUrl()
+            => $"http://vjasmash.com/tournaments/tournament/{Id}/";
+
         public override string ToString()
             => Name;
     }

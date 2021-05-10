@@ -1,8 +1,8 @@
 ﻿namespace Shine.Database
 {
-    public class ConfigSetting
+    public class ConfigEntry
     {
-        public string Setting { get; set; }
+        public string Key { get; set; }
         
         public string Value { get; set; }
     }

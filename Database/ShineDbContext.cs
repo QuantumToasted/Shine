@@ -8,13 +8,13 @@ namespace Shine.Database
             : base(options)
         { }
 
-        public DbSet<Entry> Entries { get; set; }
+        public DbSet<Entrant> Entrants { get; set; }
         
         public DbSet<Profile> Profiles { get; set; }
         
         public DbSet<Tourney> Tourneys { get; set; }
         
-        public DbSet<ConfigSetting> Config { get; set; }
+        public DbSet<ConfigEntry> Config { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -22,7 +22,7 @@ namespace Shine.Database
             modelBuilder.HasCharSet("latin1")
                 .UseCollation("latin1_swedish_ci");
 
-            modelBuilder.Entity<Entry>(entity =>
+            modelBuilder.Entity<Entrant>(entity =>
             {
                 entity.ToTable("entries");
 
@@ -87,14 +87,14 @@ namespace Shine.Database
                     .HasColumnName("tourneystart");
             });
             
-            modelBuilder.Entity<ConfigSetting>(entity =>
+            modelBuilder.Entity<ConfigEntry>(entity =>
             {
-                entity.HasKey(e => e.Setting)
+                entity.HasKey(e => e.Key)
                     .HasName("PRIMARY");
 
                 entity.ToTable("shine_config");
 
-                entity.Property(e => e.Setting).HasColumnName("setting");
+                entity.Property(e => e.Key).HasColumnName("setting");
 
                 entity.Property(e => e.Value)
                     .IsRequired()

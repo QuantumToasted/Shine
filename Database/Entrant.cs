@@ -1,6 +1,6 @@
 ﻿namespace Shine.Database
 {
-    public sealed class Entry
+    public sealed class Entrant
     {
         public int Id { get; set; }
         

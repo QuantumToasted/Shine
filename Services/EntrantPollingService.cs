@@ -16,7 +16,7 @@ using Shine.Database;
 
 namespace Shine.Services
 {
-    public sealed class EntryPollingService : DiscordClientService
+    public sealed class EntrantPollingService : DiscordClientService
     {
         private static readonly string[] CharacterQuips =
         {
@@ -24,37 +24,68 @@ namespace Shine.Services
             "Last time they played {0} against Leffen, he had to buy a new controller.",
             "Rumor has it, Wizzy is still in the bathroom to this day preparing for his match against their {0}."
         };
-        
+
         private static readonly string[] NoCharacterQuips =
         {
             "Watch out! We heard they can zero-to-death you.",
             "Last time they played against Leffen, he had to buy a new controller.",
             "Rumor has it, Wizzy is still in the bathroom to this day preparing for his match against them."
         };
-        
+
         private readonly DiscordBotBase _bot;
         private readonly Random _random;
-        private readonly Snowflake _channelId;
-        private readonly int _tourneyId;
-        private int _entryCount;
+        private int _tourneyId;
+        private Snowflake _channelId;
 
-        public EntryPollingService(ILogger<EntryPollingService> logger, DiscordBotBase bot)
+        public EntrantPollingService(ILogger<EntrantPollingService> logger, DiscordBotBase bot)
             : base(logger, bot)
         {
             _bot = bot;
             _random = bot.Services.GetRequiredService<Random>();
-
-            var config = bot.Services.GetRequiredService<IConfiguration>();
-            _channelId = config.GetValue<ulong>("EntryPolling:ChannelId");
-            _tourneyId = config.GetValue<int>("EntryPolling:TourneyId");
         }
+
+        public int LastEntrantCount { get; set; }
 
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
-            // Note: set to 0 to start from the beginning
-            var text = await File.ReadAllTextAsync("entry_count.txt", cancellationToken);
-            _entryCount = int.Parse(text);
-            await base.StartAsync(cancellationToken);
+            using var scope = _bot.Services.CreateScope();
+            await using var ctx = scope.ServiceProvider.GetRequiredService<ShineDbContext>();
+
+            if (await ctx.Config.FindAsync(new object[] {"LAST_ENTRANT_COUNT"}, cancellationToken) is not
+                { } entrantCountConfig)
+            {
+                Logger.LogError("LAST_ENTRANT_COUNT could not be found in the config table!");
+            }
+            else if (!int.TryParse(entrantCountConfig.Value, out var entrantCount))
+            {
+                Logger.LogError("LAST_ENTRANT_COUNT could not be parsed! Expected integer, got `{Value}`",
+                    entrantCountConfig.Value);
+            }
+            else if (await ctx.Config.FindAsync(new object[] {"CURRENT_TOURNEY_ID"}, cancellationToken) is not
+                { } tourneyIdConfig)
+            {
+                Logger.LogError("CURRENT_TOURNEY_ID could not be found in the config table!");
+            }
+            else if (!int.TryParse(tourneyIdConfig.Value, out _tourneyId))
+            {
+                Logger.LogError("CURRENT_TOURNEY_ID could not be parsed! Expected integer, got `{Value}`",
+                    tourneyIdConfig.Value);
+            }
+            else if (await ctx.Config.FindAsync(new object[] {"NEW_ENTRANT_CHANNEL_ID"}, cancellationToken) is not
+                { } channelIdConfig)
+            {
+                Logger.LogError("NEW_ENTRANT_CHANNEL_ID could not be found in the config table!");
+            }
+            else if (!Snowflake.TryParse(channelIdConfig.Value, out _channelId))
+            {
+                Logger.LogError("NEW_ENTRANT_CHANNEL_ID could not be parsed! Expected snowflake, got `{Value}`",
+                    channelIdConfig.Value);
+            }
+            else
+            {
+                LastEntrantCount = entrantCount;
+                await base.StartAsync(cancellationToken);
+            }
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -66,25 +97,25 @@ namespace Shine.Services
                 using var scope = _bot.Services.CreateScope();
                 await using var ctx = scope.ServiceProvider.GetRequiredService<ShineDbContext>();
 
-                var entries = await ctx.Entries
+                var entrants = await ctx.Entrants
                     .OrderBy(x => x.Id)
                     .Where(x => x.TourneyId == _tourneyId)
                     .ToListAsync(stoppingToken);
 
-                if (entries.Count > _entryCount)
+                if (entrants.Count > LastEntrantCount)
                 {
                     // only get 1 entry at a time to prevent spam
-                    var entry = entries[_entryCount]; // +1 thanks to zero-indexing
-                    var profile = await ctx.Profiles.FindAsync(new object[] {entry.PlayerId}, stoppingToken);
-                    var tourney = await ctx.Tourneys.FirstAsync(x => x.Id == entry.TourneyId, stoppingToken);
+                    var entrant = entrants[LastEntrantCount]; // +1 thanks to zero-indexing
+                    var profile = await ctx.Profiles.FindAsync(new object[] {entrant.PlayerId}, stoppingToken);
+                    var tourney = await ctx.Tourneys.FirstAsync(x => x.Id == entrant.TourneyId, stoppingToken);
                     var character = profile.GetCharacterName();
 
-                    _entryCount++;
+                    LastEntrantCount++;
 
                     var field = new LocalEmbedFieldBuilder()
-                        .WithName($"Current number of entrants: {_entryCount}/{tourney.EntrantCap}");
+                        .WithName($"Current number of entrants: {LastEntrantCount}/{tourney.EntrantCap}");
 
-                    if (_entryCount == tourney.EntrantCap)
+                    if (LastEntrantCount == tourney.EntrantCap)
                     {
                         field.WithValue(Markdown.Link("Visit the tourney page",
                                             $"http://vjasmash.com/tournaments/tournament/{tourney.Id}/") +
@@ -96,8 +127,8 @@ namespace Shine.Services
                                             $"http://vjasmash.com/tournaments/tournament/{tourney.Id}/") +
                                         " to secure your position in the tournament!");
                     }
-                    
-                    await Client.SendMessageAsync(_channelId, 
+
+                    await Client.SendMessageAsync(_channelId,
                         new LocalMessageBuilder()
                             .WithContent("@everyone")
                             .WithEmbed(new LocalEmbedBuilder()
@@ -112,10 +143,12 @@ namespace Shine.Services
                                 .WithParsedMentions(ParsedMention.Everyone))
                             .Build());
 
-                    await File.WriteAllTextAsync("entry_count.txt", _entryCount.ToString(), stoppingToken);
-                }
+                    var configEntry = await ctx.Config.FindAsync(new object[] {"LAST_ENTRANT_COUNT"}, stoppingToken);
+                    configEntry.Value = LastEntrantCount.ToString();
+                    await ctx.SaveChangesAsync(stoppingToken);
 
-                await delay;
+                    await delay;
+                }
             }
         }
     }

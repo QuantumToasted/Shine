@@ -24,7 +24,6 @@ namespace Shine
                 .ConfigureAppConfiguration(x =>
                 {
                     x.AddEnvironmentVariables("SHINE_");
-                    x.AddJsonFile("config.json");
                 })
                 .ConfigureLogging(x =>
                 {

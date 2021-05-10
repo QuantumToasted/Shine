@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using Disqord;
 using Disqord.Bot;
 using Disqord.Rest;
-using Microsoft.Extensions.Configuration;
 using Qmmands;
+using Shine.Database;
 
 namespace Shine.Commands
 {
@@ -99,7 +99,7 @@ namespace Shine.Commands
             [840026028965101578] = 840028230865518693, // Zelda
         };
         
-        public IConfiguration Configuration { get; set; }
+        public ShineDbContext Database { get; set; }
 
         [Command("add-main", "main", "add")]
         public async Task<DiscordCommandResult> AddMainAsync(IGuildEmoji emoji)
@@ -110,7 +110,12 @@ namespace Shine.Commands
             if (Context.Author.RoleIds.Contains(roleId))
                 return Response("You already added that character as a main!");
 
-            var maximum = Configuration.GetValue<int>("Mains:Maximum");
+            if (await Database.Config.FindAsync("MAXIMUM_MAINS") is not { } maximumMains ||
+                !int.TryParse(maximumMains.Value, out var maximum))
+            {
+                return Response("This command isn't properly configured. Please contact one of the admins.");
+            }
+
             if (EmojiToRoleMap.Values.Count(x => Context.Author.RoleIds.Contains(x)) >= maximum)
             {
                 return Response($"You are not allowed to have more than {maximum} characters you main at once.\n" +
