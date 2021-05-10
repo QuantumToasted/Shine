@@ -79,8 +79,6 @@ namespace Shine.Commands
         [Command("reset-entrants")]
         public async Task<DiscordCommandResult> ResetEntrantCountAsync()
         {
-            EntrantService.LastEntrantCount = 0;
-            
             var entrantCount = await Database.Config.FindAsync("LAST_ENTRANT_COUNT");
             entrantCount.Value = 0.ToString(); // lol
             await Database.SaveChangesAsync();
@@ -95,8 +93,6 @@ namespace Shine.Commands
             var id = int.Parse(tourneyId.Value);
             var tourney = await Database.Tourneys.FirstAsync(x => x.Id == id);
             var tourneyEntrants = await Database.Entrants.Where(x => x.TourneyId == tourney.Id).ToListAsync();
-
-            EntrantService.LastEntrantCount = tourneyEntrants.Count;
             
             var entrantCount = await Database.Config.FindAsync("LAST_ENTRANT_COUNT");
             entrantCount.Value = tourneyEntrants.Count.ToString();
