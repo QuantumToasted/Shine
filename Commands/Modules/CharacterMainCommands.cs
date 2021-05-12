@@ -105,7 +105,9 @@ namespace Shine.Commands
 
         [Command("add-main", "main", "add")]
         [Description("Adds a character as a main.")]
-        public async Task<DiscordCommandResult> AddMainAsync(IGuildEmoji emoji)
+        public async Task<DiscordCommandResult> AddMainAsync(
+            [Description("The emoji for the character you wish to add.")]
+                IGuildEmoji emoji)
         {
             if (!EmojiToRoleMap.TryGetValue(emoji.Id, out var roleId))
                 return Response("That emoji doesn't belong to a character!");
@@ -131,7 +133,9 @@ namespace Shine.Commands
         
         [Command("remove-main", "remove", "abandon")]
         [Description("Removes a character as a main.")]
-        public async Task<DiscordCommandResult> RemoveMainAsync(IGuildEmoji emoji)
+        public async Task<DiscordCommandResult> RemoveMainAsync(
+            [Description("The emoji for the character you wish to remove.")]
+                IGuildEmoji emoji)
         {
             if (!EmojiToRoleMap.TryGetValue(emoji.Id, out var roleId))
                 return Response("That emoji doesn't belong to a character!");
