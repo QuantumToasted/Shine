@@ -18,6 +18,14 @@ jobs:
         dotnet-version: '5.0.202'
     - name: Publish project
       run: dotnet publish -c Release -r linux-x64 -o deploy
+    - name: Generate command list
+      run: /home/runner/work/Shine/Shine/deploy/Shine /GenerateMarkdown=true
+    - name: Copy command list to wiki
+      uses: SwiftDocOrg/github-wiki-publish-action@v1
+      with:
+        path: "/home/runner/work/Shine/Shine/deploy/Shine/docs"
+      env:
+        GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
     - name: Copy via SSH
       uses: garygrossgarten/github-action-scp@v0.7.3
       with:
