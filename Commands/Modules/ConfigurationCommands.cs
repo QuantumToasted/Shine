@@ -12,7 +12,7 @@ namespace Shine.Commands
 {
     [Name("Configuration")]
     [Description("Commands for configuring the bot's features and settings.")]
-    [Group("configuration", "config")]
+    [Group("config")]
     [RequireBotOwner]
     public sealed class ConfigurationCommands : DiscordGuildModuleBase
     {
