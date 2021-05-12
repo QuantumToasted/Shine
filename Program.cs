@@ -27,11 +27,22 @@ namespace Shine
         
         private static void Main(string[] args)
         {
+            var configuration = new ConfigurationBuilder()
+                .AddCommandLine(args)
+                .Build();
+            
+            if (configuration.GetSection("GenerateMarkdown").Exists())
+            {
+                var service = new CommandService();
+                service.AddModules(typeof(CharacterMainCommands).Assembly);
+                GenerateCommandMarkdown(service);
+                return;
+            }
+            
             using var host = new HostBuilder()
                 .ConfigureAppConfiguration(x =>
                 {
                     x.AddEnvironmentVariables("SHINE_");
-                    x.AddCommandLine(args);
                 })
                 .ConfigureLogging(x =>
                 {
@@ -76,17 +87,7 @@ namespace Shine
                 })
                 .Build();
 
-            var configuration = host.Services.GetRequiredService<IConfiguration>();
-            if (configuration.GetSection("GenerateMarkdown").Exists())
-            {
-                var service = new CommandService();
-                service.AddModules(typeof(CharacterMainCommands).Assembly);
-                GenerateCommandMarkdown(service);
-            }
-            else
-            {
-                host.Run();
-            }
+            host.Run();
         }
 
         private static void GenerateCommandMarkdown(CommandService commandService)
