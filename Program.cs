@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Qmmands;
 using Serilog;
 using Serilog.Events;
+using Shine.Commands;
 using Shine.Common;
 using Shine.Database;
 using Shine.Extensions;
@@ -76,10 +77,11 @@ namespace Shine
                 .Build();
 
             var configuration = host.Services.GetRequiredService<IConfiguration>();
-            
             if (configuration.GetSection("GenerateMarkdown").Exists())
             {
-                GenerateCommandMarkdown(host.Services.GetRequiredService<CommandService>());
+                var service = new CommandService();
+                service.AddModules(typeof(CharacterMainCommands).Assembly);
+                GenerateCommandMarkdown(service);
             }
             else
             {
@@ -118,8 +120,9 @@ namespace Shine
                     builder.AppendNewline("|");
                 }
             }
-            
-            File.WriteAllText("Command-List.md", builder.ToString());
+
+            Directory.CreateDirectory("docs");
+            File.WriteAllText("docs/Command-List.md", builder.ToString());
         }
     }
 }
