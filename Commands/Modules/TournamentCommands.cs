@@ -11,7 +11,7 @@ namespace Shine.Commands
 {
     [Name("Tournament")]
     [Description("Commands for displaying information about the currently active tournament.")]
-    [Group("tournament", "tourney", "t")]
+    [Group("tournament", "tourney")]
     public sealed class TournamentCommands : DiscordGuildModuleBase
     {
         private Tourney _tourney;
