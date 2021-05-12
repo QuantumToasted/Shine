@@ -2,7 +2,7 @@
 {
     public sealed class Profile
     {
-        public int PlayerId { get; set; }
+        public int Id { get; set; }
         
         public string FullName { get; set; }
         

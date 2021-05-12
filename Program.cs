@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using Disqord;
 using Disqord.Bot.Hosting;
 using Disqord.Gateway;
@@ -9,21 +11,26 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Qmmands;
 using Serilog;
 using Serilog.Events;
 using Shine.Common;
 using Shine.Database;
+using Shine.Extensions;
 
 namespace Shine
 {
     public static class Program
     {
-        private static void Main()
+        private const string PREFIX = "s!";
+        
+        private static void Main(string[] args)
         {
             using var host = new HostBuilder()
                 .ConfigureAppConfiguration(x =>
                 {
                     x.AddEnvironmentVariables("SHINE_");
+                    x.AddCommandLine(args);
                 })
                 .ConfigureLogging(x =>
                 {
@@ -60,15 +67,59 @@ namespace Shine
                         114926832440180738,
                         176081685702639616 
                     };
-                    bot.Prefixes = new[] {"s!"};
+                    bot.Prefixes = new[] {PREFIX};
                     bot.Activities = new[]
                     {
-                        new LocalActivity("s!", ActivityType.Playing)
+                        new LocalActivity(PREFIX, ActivityType.Playing)
                     };
                 })
                 .Build();
+
+            var configuration = host.Services.GetRequiredService<IConfiguration>();
             
-            host.Run();
+            if (configuration.GetSection("GenerateMarkdown").Exists())
+            {
+                GenerateCommandMarkdown(host.Services.GetRequiredService<CommandService>());
+            }
+            else
+            {
+                host.Run();
+            }
+        }
+
+        private static void GenerateCommandMarkdown(CommandService commandService)
+        {
+            var builder = new StringBuilder();
+
+            foreach (var module in commandService.TopLevelModules.OrderBy(x => x.Name))
+            {
+                builder.AppendNewline($"## {module.Name}")
+                    .AppendNewline(module.Description)
+                    .AppendNewline("|Command|Description|")
+                    .AppendNewline("|---|---|");
+
+                foreach (var command in CommandUtilities.EnumerateAllCommands(module))
+                {
+                    builder.Append('|')
+                        .Append(string.Join("<br>",
+                            command.FullAliases.Select(x => Markdown.Code($"{PREFIX}{x}{command.FormatArguments()}"))))
+                        .Append('|')
+                        .Append(command.Description.Replace("\n", "<br>"));
+
+                    foreach (var parameter in command.Parameters)
+                    {
+                        builder.Append("<br>")
+                            .Append(Markdown.Code(parameter.Name))
+                            .Append(": ")
+                            .Append(parameter.Description.Replace("\n", "<br>"))
+                            .Append(parameter.IsOptional ? $" {Markdown.Bold("(optional)")}" : string.Empty);
+                    }
+
+                    builder.AppendNewline("|");
+                }
+            }
+            
+            File.WriteAllText("Command-List.md", builder.ToString());
         }
     }
 }

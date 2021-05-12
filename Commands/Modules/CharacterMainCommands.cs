@@ -9,7 +9,9 @@ using Shine.Database;
 
 namespace Shine.Commands
 {
-    public sealed class RoleCommands : DiscordGuildModuleBase
+    [Name("Mains")]
+    [Description("Commands for adding and removing characters you prefer playing, a.k.a. \"mains\".")]
+    public sealed class CharacterMainCommands : DiscordGuildModuleBase
     {
         private static readonly IDictionary<Snowflake, Snowflake> EmojiToRoleMap = new Dictionary<Snowflake, Snowflake>
         {
@@ -102,6 +104,7 @@ namespace Shine.Commands
         public ShineDbContext Database { get; set; }
 
         [Command("add-main", "main", "add")]
+        [Description("Adds a character as a main.")]
         public async Task<DiscordCommandResult> AddMainAsync(IGuildEmoji emoji)
         {
             if (!EmojiToRoleMap.TryGetValue(emoji.Id, out var roleId))
@@ -127,6 +130,7 @@ namespace Shine.Commands
         }
         
         [Command("remove-main", "remove", "abandon")]
+        [Description("Removes a character as a main.")]
         public async Task<DiscordCommandResult> RemoveMainAsync(IGuildEmoji emoji)
         {
             if (!EmojiToRoleMap.TryGetValue(emoji.Id, out var roleId))

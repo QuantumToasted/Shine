@@ -35,7 +35,7 @@ namespace Shine.Database
 
             modelBuilder.Entity<Profile>(entity =>
             {
-                entity.HasKey(e => e.PlayerId)
+                entity.HasKey(e => e.Id)
                     .HasName("PRIMARY");
 
                 entity.ToTable("profiles");
@@ -44,7 +44,7 @@ namespace Shine.Database
                     .HasCharSet("utf8")
                     .UseCollation("utf8_general_ci");
 
-                entity.Property(e => e.PlayerId).HasColumnName("playerid");
+                entity.Property(e => e.Id).HasColumnName("playerid");
 
                 entity.Property(e => e.FullName)
                     .IsRequired()
